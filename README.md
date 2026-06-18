@@ -82,7 +82,9 @@ When in USB Serial mode:
 
 ## ADB Control
 
-Control the app remotely via ADB:
+Control and monitor the app remotely via ADB:
+
+### Configuration & Connection
 
 ```bash
 # Detect system
@@ -92,19 +94,97 @@ adb shell am broadcast -a com.zte.modem.DETECT
 adb shell am broadcast -a com.zte.modem.CONFIGURE
 
 # Configure specific mode
-adb shell am broadcast -a com.zte.modem.CONFIGURE --es mode "cdc_ether"
+adb shell am broadcast -a com.zte.modem.CONFIGURE --es mode "serial"
 
 # Connect to internet
 adb shell am broadcast -a com.zte.modem.CONNECT --es apn "internet"
 
 # Disconnect
 adb shell am broadcast -a com.zte.modem.DISCONNECT
+```
 
-# Get diagnostics
+### AT Commands & Modem Queries
+
+```bash
+# Send custom AT command
+adb shell am broadcast -a com.zte.modem.SEND_AT --es command "AT+CGDCONT?"
+
+# Query signal strength
+adb shell am broadcast -a com.zte.modem.QUERY_SIGNAL
+
+# Query carrier/network
+adb shell am broadcast -a com.zte.modem.QUERY_CARRIER
+
+# Query IMEI
+adb shell am broadcast -a com.zte.modem.QUERY_IMEI
+```
+
+### Status & Diagnostics
+
+```bash
+# Get connection status
+adb shell am broadcast -a com.zte.modem.GET_CONNECTION_STATUS
+
+# Get serial port status
+adb shell am broadcast -a com.zte.modem.GET_SERIAL_STATUS
+
+# Get full diagnostics
 adb shell am broadcast -a com.zte.modem.GET_STATUS
 
-# Get full log
+# Get main log
 adb shell am broadcast -a com.zte.modem.GET_LOG
+
+# Get serial terminal log
+adb shell am broadcast -a com.zte.modem.GET_SERIAL_LOG
+```
+
+### Monitoring Output
+
+All ADB commands output to `logcat`. Monitor in real-time:
+
+```bash
+# Watch all app output
+adb logcat -s System.out:I | grep "ZTE Modem"
+
+# Watch AT commands and responses
+adb logcat | grep -E "\[ADB\]|\[SEND\]|\[MODEM\]"
+
+# Watch connection events
+adb logcat | grep -i "connect\|vpn\|modem"
+```
+
+### Full Automation Example
+
+```bash
+#!/bin/bash
+# Complete modem setup and connection
+
+# 1. Detect system
+adb shell am broadcast -a com.zte.modem.DETECT
+sleep 2
+
+# 2. Configure to serial mode
+adb shell am broadcast -a com.zte.modem.CONFIGURE --es mode "serial"
+sleep 3
+
+# 3. Check serial status
+adb shell am broadcast -a com.zte.modem.GET_SERIAL_STATUS
+
+# 4. Query modem info
+adb shell am broadcast -a com.zte.modem.QUERY_IMEI
+sleep 1
+adb shell am broadcast -a com.zte.modem.QUERY_SIGNAL
+sleep 1
+
+# 5. Connect to internet
+adb shell am broadcast -a com.zte.modem.CONNECT --es apn "fast.t-mobile.com"
+sleep 5
+
+# 6. Check connection status
+adb shell am broadcast -a com.zte.modem.GET_CONNECTION_STATUS
+
+# Monitor output
+adb logcat -s System.out:I
 ```
 
 Supported modes: `auto`, `cdc_acm`, `cdc_ncm`, `cdc_ether`, `rndis`, `serial`

@@ -251,8 +251,15 @@ public class MainActivity extends Activity {
         adbFilter.addAction("com.zte.modem.CONFIGURE");
         adbFilter.addAction("com.zte.modem.CONNECT");
         adbFilter.addAction("com.zte.modem.DISCONNECT");
+        adbFilter.addAction("com.zte.modem.SEND_AT");
+        adbFilter.addAction("com.zte.modem.QUERY_SIGNAL");
+        adbFilter.addAction("com.zte.modem.QUERY_CARRIER");
+        adbFilter.addAction("com.zte.modem.QUERY_IMEI");
+        adbFilter.addAction("com.zte.modem.GET_CONNECTION_STATUS");
+        adbFilter.addAction("com.zte.modem.GET_SERIAL_STATUS");
         adbFilter.addAction("com.zte.modem.GET_STATUS");
         adbFilter.addAction("com.zte.modem.GET_LOG");
+        adbFilter.addAction("com.zte.modem.GET_SERIAL_LOG");
         registerReceiver(adbControlReceiver, adbFilter);
 
         loadPreferences();
@@ -524,12 +531,43 @@ public class MainActivity extends Activity {
                     disconnectModem();
                     break;
 
+                case "com.zte.modem.SEND_AT":
+                    String atCommand = intent.getStringExtra("command");
+                    if (atCommand != null) {
+                        adbSendATCommand(atCommand);
+                    }
+                    break;
+
+                case "com.zte.modem.QUERY_SIGNAL":
+                    adbQuerySignal();
+                    break;
+
+                case "com.zte.modem.QUERY_CARRIER":
+                    adbQueryCarrier();
+                    break;
+
+                case "com.zte.modem.QUERY_IMEI":
+                    adbQueryIMEI();
+                    break;
+
+                case "com.zte.modem.GET_CONNECTION_STATUS":
+                    adbGetConnectionStatus();
+                    break;
+
+                case "com.zte.modem.GET_SERIAL_STATUS":
+                    adbGetSerialStatus();
+                    break;
+
                 case "com.zte.modem.GET_STATUS":
                     sendDiagnostics();
                     break;
 
                 case "com.zte.modem.GET_LOG":
                     sendLog();
+                    break;
+
+                case "com.zte.modem.GET_SERIAL_LOG":
+                    adbGetSerialLog();
                     break;
             }
         }
@@ -568,6 +606,71 @@ public class MainActivity extends Activity {
     private void sendLog() {
         System.out.println("=== ZTE Modem Log ===");
         System.out.println(logBuilder.toString());
+    }
+
+    private void adbSendATCommand(String command) {
+        if (!command.endsWith("\r\n")) {
+            command += "\r\n";
+        }
+        log("[ADB->AT] " + command.trim());
+        System.out.println("[ADB->AT] Sending: " + command.trim());
+        sendSerialData(command);
+    }
+
+    private void adbQuerySignal() {
+        log("[ADB] Querying signal strength...");
+        System.out.println("[ADB] Querying signal strength (AT+CSQ)");
+        sendSerialData("AT+CSQ\r\n");
+    }
+
+    private void adbQueryCarrier() {
+        log("[ADB] Querying carrier...");
+        System.out.println("[ADB] Querying carrier (AT+COPS?)");
+        sendSerialData("AT+COPS?\r\n");
+    }
+
+    private void adbQueryIMEI() {
+        log("[ADB] Querying IMEI...");
+        System.out.println("[ADB] Querying IMEI (AT+CGSN)");
+        sendSerialData("AT+CGSN\r\n");
+    }
+
+    private void adbGetConnectionStatus() {
+        StringBuilder status = new StringBuilder();
+        status.append("=== Connection Status ===\n");
+        status.append("Connected: ").append(isConnected).append("\n");
+        status.append("APN: ").append(apnInput.getText().toString()).append("\n");
+        status.append("Serial Port: ").append(serialPort != null ? "Open" : "Closed").append("\n");
+        status.append("VPN Service: ").append(isConnected ? "Running" : "Stopped").append("\n");
+
+        log(status.toString());
+        System.out.println(status.toString());
+    }
+
+    private void adbGetSerialStatus() {
+        StringBuilder status = new StringBuilder();
+        status.append("=== Serial Port Status ===\n");
+        status.append("Port: ").append(serialPort != null ? "Open" : "Closed").append("\n");
+
+        if (serialPort != null) {
+            try {
+                status.append("Baud Rate: 115200\n");
+                status.append("Data Bits: 8\n");
+                status.append("Stop Bits: 1\n");
+                status.append("Parity: None\n");
+                status.append("I/O Manager: ").append(ioManager != null ? "Running" : "Stopped").append("\n");
+            } catch (Exception e) {
+                status.append("Error reading port info: ").append(e.getMessage()).append("\n");
+            }
+        }
+
+        log(status.toString());
+        System.out.println(status.toString());
+    }
+
+    private void adbGetSerialLog() {
+        System.out.println("=== Serial Terminal Log ===");
+        System.out.println(serialBuilder.toString());
     }
 
     private void configureAndOpenSerial(UsbDevice device) {
