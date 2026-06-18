@@ -8,6 +8,7 @@
 
     <application
         android:label="ZTE Modem Config"
+        android:icon="@mipmap/ic_launcher"
         android:theme="@android:style/Theme.Material.Light">
 
         <activity android:name=".MainActivity"
