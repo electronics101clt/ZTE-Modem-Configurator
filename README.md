@@ -189,6 +189,14 @@ adb logcat -s System.out:I
 
 Supported modes: `auto`, `cdc_acm`, `cdc_ncm`, `cdc_ether`, `rndis`, `serial`
 
+## Icon Credits
+
+App icon sourced from [Flaticon - Modem Icons](https://www.flaticon.com/free-icons/modem)
+
+## Download
+
+**Latest Release:** [ZTE-Modem-Configurator-v2.1.apk](https://github.com/electronics101clt/ZTE-Modem-Configurator/releases)
+
 ## License
 
 MIT
